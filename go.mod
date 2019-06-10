@@ -1,3 +1,3 @@
-module bitbucket.org/creachadair/atomicfile
+module github.com/creachadair/atomicfile
 
 go 1.12

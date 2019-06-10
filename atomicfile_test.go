@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bitbucket.org/creachadair/atomicfile"
+	"github.com/creachadair/atomicfile"
 )
 
 // withTempDir invokes f with the current working directory as a freshly
