@@ -79,12 +79,21 @@ func (f File) Close() error {
 		os.Remove(name) // best-effort
 		return err
 	}
+	f.tmp = nil // rename succeeded
 	return nil
 }
 
 // Cancel closes the temporary associated with f and discards it.
 // It is safe to call Cancel even if f.Close has already succeeded.
-func (f File) Cancel() { f.tmp.Close(); os.Remove(f.tmp.Name()) }
+func (f File) Cancel() {
+	// Clean up the temp file (only) if a rename has not yet occurred, or it failed.
+	// The check averts an A-B-A conflict during the window after renaming.
+	if tmp := f.tmp; tmp != nil {
+		f.tmp = nil
+		tmp.Close()
+		os.Remove(tmp.Name())
+	}
+}
 
 // Write writes data to f, satisfying io.Writer.
 func (f File) Write(data []byte) (int, error) { return f.tmp.Write(data) }
