@@ -8,6 +8,7 @@
 package atomicfile
 
 import (
+	"errors"
 	"io"
 	"io/ioutil"
 	"os"
@@ -16,17 +17,17 @@ import (
 
 // New constructs a new writable File with the given mode that, when
 // successfully closed will be renamed to target.
-func New(target string, mode os.FileMode) (File, error) {
+func New(target string, mode os.FileMode) (*File, error) {
 	dir, name := filepath.Split(target)
 	f, err := ioutil.TempFile(dir, "tmp."+name)
 	if err != nil {
-		return File{}, err
+		return nil, err
 	} else if err := f.Chmod(mode); err != nil {
 		f.Close()
 		os.Remove(f.Name())
-		return File{}, err
+		return nil, err
 	}
-	return File{
+	return &File{
 		tmp:    f,
 		target: target,
 	}, nil
@@ -69,7 +70,10 @@ type File struct {
 // Close closes the temporary associated with f and renames it to the
 // designated target file. If closing the temporary fails, or if the rename
 // fails, the temporary file is unlinked before Close returns.
-func (f File) Close() error {
+func (f *File) Close() error {
+	if f.tmp == nil {
+		return errors.New("file is already closed")
+	}
 	name := f.tmp.Name()
 	if err := f.tmp.Close(); err != nil {
 		os.Remove(name) // best-effort
@@ -85,7 +89,7 @@ func (f File) Close() error {
 
 // Cancel closes the temporary associated with f and discards it.
 // It is safe to call Cancel even if f.Close has already succeeded.
-func (f File) Cancel() {
+func (f *File) Cancel() {
 	// Clean up the temp file (only) if a rename has not yet occurred, or it failed.
 	// The check averts an A-B-A conflict during the window after renaming.
 	if tmp := f.tmp; tmp != nil {
@@ -96,4 +100,4 @@ func (f File) Cancel() {
 }
 
 // Write writes data to f, satisfying io.Writer.
-func (f File) Write(data []byte) (int, error) { return f.tmp.Write(data) }
+func (f *File) Write(data []byte) (int, error) { return f.tmp.Write(data) }
