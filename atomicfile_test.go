@@ -16,7 +16,7 @@ import (
 func withTempDir(t *testing.T, f func(path string)) {
 	t.Helper()
 
-	dir, err := ioutil.TempDir("", "test")
+	dir, err := os.MkdirTemp("", "test")
 	if err != nil {
 		t.Fatalf("Creating temp directory: %v", err)
 	}
@@ -39,7 +39,7 @@ func mustMkdirAll(t *testing.T, path string) string {
 func checkFile(t *testing.T, path string, perm os.FileMode, want string) {
 	t.Helper()
 
-	got, err := ioutil.ReadFile(path)
+	got, err := os.ReadFile(path)
 	if err != nil {
 		t.Errorf("Reading target: %v", err)
 	}
@@ -110,7 +110,7 @@ func TestNoClobber(t *testing.T) {
 		path := filepath.Join(tmp, "target.txt")
 
 		const oldMessage = "If I keep my eyes closed he looks just like you"
-		if err := ioutil.WriteFile(path, []byte(oldMessage), 0400); err != nil {
+		if err := os.WriteFile(path, []byte(oldMessage), 0400); err != nil {
 			t.Fatalf("Writing target file: %v", err)
 		}
 
