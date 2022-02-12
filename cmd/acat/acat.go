@@ -15,6 +15,21 @@ import (
 
 var fileMode = flag.String("mode", "0600", "Output file mode")
 
+func init() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, `Usage: %[1]s <output-file>
+
+Copy standard input to the specified file through a temporary file.
+In case of error, the original contents of the file, if any, are not
+modified; otherwise, the file is replaced in one step by renaming the
+temporary file.
+
+Options:
+`, filepath.Base(os.Args[0]))
+		flag.PrintDefaults()
+	}
+}
+
 func main() {
 	flag.Parse()
 	if flag.NArg() != 1 {
