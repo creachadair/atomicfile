@@ -18,7 +18,7 @@ import (
 // successfully closed will be renamed to target.
 func New(target string, mode os.FileMode) (*File, error) {
 	dir, name := filepath.Split(target)
-	f, err := os.CreateTemp(dir, "tmp."+name)
+	f, err := os.CreateTemp(filepath.Clean(dir), "tmp."+name)
 	if err != nil {
 		return nil, err
 	} else if err := f.Chmod(mode); err != nil {
