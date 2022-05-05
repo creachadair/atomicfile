@@ -4,6 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -12,7 +13,10 @@ import (
 	"github.com/creachadair/atomicfile"
 )
 
-var fileMode = flag.String("mode", "0600", "Output file mode")
+var (
+	fileMode = flag.String("mode", "0600", "Output file mode")
+	nonEmpty = flag.Bool("nonempty", false, "Only write if the input is nonempty")
+)
 
 func init() {
 	flag.Usage = func() {
@@ -38,7 +42,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("Invalid mode %q: %v", *fileMode, err)
 	}
-	if _, err := atomicfile.WriteAll(flag.Arg(0), os.Stdin, os.FileMode(mode)); err != nil {
-		log.Fatalf("Error: %v", err)
+	f, err := atomicfile.New(flag.Arg(0), os.FileMode(mode))
+	if err != nil {
+		log.Fatalf("New: %v", err)
+	}
+	defer f.Cancel()
+	nw, err := io.Copy(f, os.Stdin)
+	if err != nil {
+		f.Cancel()
+		log.Fatalf("Copy: %v", err)
+	} else if nw == 0 && *nonEmpty {
+		return
+	} else if err := f.Close(); err != nil {
+		log.Fatalf("Close: %v", err)
 	}
 }
