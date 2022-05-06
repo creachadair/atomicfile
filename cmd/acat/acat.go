@@ -16,6 +16,7 @@ import (
 var (
 	fileMode = flag.String("mode", "0600", "Output file mode")
 	nonEmpty = flag.Bool("nonempty", false, "Only write if the input is nonempty")
+	doTee    = flag.Bool("tee", false, "Also copy stdin to stdout")
 )
 
 func init() {
@@ -47,7 +48,13 @@ func main() {
 		log.Fatalf("New: %v", err)
 	}
 	defer f.Cancel()
-	nw, err := io.Copy(f, os.Stdin)
+
+	var w io.Writer = f
+	if *doTee {
+		w = io.MultiWriter(f, os.Stdout)
+	}
+
+	nw, err := io.Copy(w, os.Stdin)
 	if err != nil {
 		f.Cancel()
 		log.Fatalf("Copy: %v", err)
