@@ -2,7 +2,6 @@ package atomicfile_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -77,7 +76,7 @@ func TestCancel(t *testing.T) {
 	}
 
 	// No temporary files should be left around.
-	dc, err := ioutil.ReadDir(tmp)
+	dc, err := os.ReadDir(tmp)
 	if err != nil {
 		t.Errorf("ReadDir %q: unexpected error: %v", tmp, err)
 	}
