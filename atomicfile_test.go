@@ -1,7 +1,9 @@
 package atomicfile_test
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -152,4 +154,40 @@ func TestSameDirectory(t *testing.T) {
 	} else {
 		t.Logf("Found matching temp: %q", m[0])
 	}
+}
+
+func TestTx(t *testing.T) {
+	testErr := errors.New("plumbing error")
+
+	t.Run("Error", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "nonesuch.txt")
+		err := atomicfile.Tx(path, 0600, func(*atomicfile.File) error {
+			return testErr
+		})
+		if err != testErr {
+			t.Errorf("Got error %v, want %v", err, testErr)
+		}
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Errorf("Target path should not exist, err=%v", err)
+		}
+	})
+
+	t.Run("OK", func(t *testing.T) {
+		const text = "hello world\n"
+		path := filepath.Join(t.TempDir(), "goodies.txt")
+		err := atomicfile.Tx(path, 0600, func(f *atomicfile.File) error {
+			io.WriteString(f, text)
+			return nil
+		})
+		if err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+		bits, err := os.ReadFile(path)
+		if err != nil {
+			t.Errorf("Reading target: %v", err)
+		}
+		if got := string(bits); got != text {
+			t.Errorf("Output: got %q, want %q", got, text)
+		}
+	})
 }

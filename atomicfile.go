@@ -32,6 +32,21 @@ func New(target string, mode os.FileMode) (*File, error) {
 	}, nil
 }
 
+// Tx runs f with a file constructed by New.  If f reports an error, the file
+// is automatically cancelled and Tx returns the error from f. Otherwise, Tx
+// returns the error from calling Close on the file.
+func Tx(target string, mode os.FileMode, f func(*File) error) error {
+	tmp, err := New(target, mode)
+	if err != nil {
+		return err
+	}
+	defer tmp.Cancel()
+	if err := f(tmp); err != nil {
+		return err
+	}
+	return tmp.Close()
+}
+
 // WriteData copies data to the specified target path via a File.
 func WriteData(target string, data []byte, mode os.FileMode) error {
 	f, err := New(target, mode)
