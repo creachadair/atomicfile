@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/creachadair/atomicfile"
@@ -175,19 +176,39 @@ func TestTx(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		const text = "hello world\n"
 		path := filepath.Join(t.TempDir(), "goodies.txt")
-		err := atomicfile.Tx(path, 0600, func(f *atomicfile.File) error {
+		err := atomicfile.Tx(path, 0604, func(f *atomicfile.File) error {
 			io.WriteString(f, text)
 			return nil
 		})
 		if err != nil {
 			t.Errorf("Unexpected error: %v", err)
 		}
-		bits, err := os.ReadFile(path)
+		checkFile(t, path, 0604, text)
+	})
+}
+
+func TestWrite(t *testing.T) {
+	const input = "some of what a fool thinks often remains"
+
+	t.Run("WriteAll", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "target.txt")
+		data := strings.NewReader(input)
+
+		nw, err := atomicfile.WriteAll(path, data, 0600)
 		if err != nil {
-			t.Errorf("Reading target: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
-		if got := string(bits); got != text {
-			t.Errorf("Output: got %q, want %q", got, text)
+		if int(nw) != len(input) {
+			t.Errorf("Length: got %d, want %d", nw, len(input))
 		}
+		checkFile(t, path, 0600, input)
+	})
+
+	t.Run("WriteData", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "target.txt")
+		if err := atomicfile.WriteData(path, []byte(input), 0664); err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+		checkFile(t, path, 0664, input)
 	})
 }

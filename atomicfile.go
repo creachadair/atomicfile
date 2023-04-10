@@ -49,29 +49,22 @@ func Tx(target string, mode os.FileMode, f func(*File) error) error {
 
 // WriteData copies data to the specified target path via a File.
 func WriteData(target string, data []byte, mode os.FileMode) error {
-	f, err := New(target, mode)
-	if err != nil {
+	return Tx(target, mode, func(f *File) error {
+		_, err := f.Write(data)
 		return err
-	} else if _, err := f.Write(data); err != nil {
-		f.Cancel()
-		return err
-	}
-	return f.Close()
+	})
 }
 
 // WriteAll copies all the data from r to the specified target path via a File.
 // It reports the total number of bytes copied.
 func WriteAll(target string, r io.Reader, mode os.FileMode) (int64, error) {
-	f, err := New(target, mode)
-	if err != nil {
-		return 0, err
-	}
-	nw, err := io.Copy(f, r)
-	if err != nil {
-		f.Cancel()
-		return nw, err
-	}
-	return nw, f.Close()
+	var nw int64
+	err := Tx(target, mode, func(f *File) error {
+		var err error
+		nw, err = io.Copy(f, r)
+		return err
+	})
+	return nw, err
 }
 
 // A File is a writable temporary file that will be renamed to a target path
