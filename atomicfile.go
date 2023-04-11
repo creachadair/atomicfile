@@ -108,3 +108,6 @@ func (f *File) Cancel() {
 
 // Write writes data to f, satisfying io.Writer.
 func (f *File) Write(data []byte) (int, error) { return f.tmp.Write(data) }
+
+// ReadFrom implements the io.ReaderFrom interface to the underlying temporary.
+func (f *File) ReadFrom(r io.Reader) (int64, error) { return f.tmp.ReadFrom(r) }

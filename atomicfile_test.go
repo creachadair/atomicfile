@@ -12,6 +12,10 @@ import (
 	"github.com/creachadair/atomicfile"
 )
 
+var (
+	_ io.ReaderFrom = (*atomicfile.File)(nil)
+)
+
 func mustMkdirAll(t *testing.T, path string) string {
 	t.Helper()
 
