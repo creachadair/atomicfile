@@ -61,7 +61,7 @@ func WriteAll(target string, r io.Reader, mode os.FileMode) (int64, error) {
 	var nw int64
 	err := Tx(target, mode, func(f *File) error {
 		var err error
-		nw, err = io.Copy(f, r)
+		nw, err = f.tmp.ReadFrom(r)
 		return err
 	})
 	return nw, err
