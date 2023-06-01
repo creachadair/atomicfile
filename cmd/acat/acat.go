@@ -28,6 +28,9 @@ In case of error, the original contents of the file, if any, are not
 modified; otherwise, the file is replaced in one step by renaming the
 temporary file.
 
+If -nonempty is true, %[1]s reports an error without writing the target
+file if the input is empty.
+
 Options:
 `, filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
