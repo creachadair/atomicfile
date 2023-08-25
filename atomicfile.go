@@ -17,6 +17,12 @@ import (
 // New constructs a new writable File with the given mode that, when
 // successfully closed will be renamed to target.
 func New(target string, mode os.FileMode) (*File, error) {
+	// Verify that the target either does not exist, or is a regular file.  This
+	// does not prevent someone creating it later, but averts an obvious
+	// eventual failure overwriting a directory, device, etc.
+	if fi, err := os.Lstat(target); err == nil && !fi.Mode().IsRegular() {
+		return nil, errors.New("target exists and is not a regular file")
+	}
 	dir, name := filepath.Split(target)
 	f, err := os.CreateTemp(filepath.Clean(dir), "aftmp."+name)
 	if err != nil {

@@ -60,6 +60,18 @@ func TestFile(t *testing.T) {
 	checkFile(t, path, 0623, message)
 }
 
+func TestExists(t *testing.T) {
+	target := filepath.Join(t.TempDir(), "target")
+	if err := os.Mkdir(target, 0755); err != nil {
+		t.Fatalf("Create target directory: %v", err)
+	}
+	f, err := atomicfile.New(target, 0600)
+	if err == nil {
+		f.Cancel()
+		t.Fatalf("New: got %v, want error", f)
+	}
+}
+
 func TestCancel(t *testing.T) {
 	tmp := t.TempDir()
 	path := filepath.Join(tmp, "target.txt")
