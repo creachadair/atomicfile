@@ -16,15 +16,6 @@ var (
 	_ io.ReaderFrom = (*atomicfile.File)(nil)
 )
 
-func mustMkdirAll(t *testing.T, path string) string {
-	t.Helper()
-
-	if err := os.MkdirAll(path, 0700); err != nil {
-		t.Fatalf("Mkdir: %v", err)
-	}
-	return path
-}
-
 func checkFile(t *testing.T, path string, perm os.FileMode, want string) {
 	t.Helper()
 
@@ -45,7 +36,10 @@ func checkFile(t *testing.T, path string, perm os.FileMode, want string) {
 
 func TestFile(t *testing.T) {
 	tmp := t.TempDir()
-	path := filepath.Join(mustMkdirAll(t, tmp+"/a/b/c"), "target.txt")
+	path := filepath.Join(tmp, "a", "b", "c", "target.txt")
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		t.Fatalf("Create output directory: %v", err)
+	}
 
 	f, err := atomicfile.New(path, 0623)
 	if err != nil {

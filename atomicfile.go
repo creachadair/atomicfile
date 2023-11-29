@@ -14,8 +14,9 @@ import (
 	"path/filepath"
 )
 
-// New constructs a new writable File with the given mode that, when
-// successfully closed will be renamed to target.
+// New constructs a new writable File with the given mode that will be renamed
+// to target when successfully closed.  New reports an error if target already
+// exists and is not a plain (regular) file.
 func New(target string, mode os.FileMode) (*File, error) {
 	// Verify that the target either does not exist, or is a regular file.  This
 	// does not prevent someone creating it later, but averts an obvious
@@ -38,7 +39,7 @@ func New(target string, mode os.FileMode) (*File, error) {
 	}, nil
 }
 
-// Tx runs f with a file constructed by New.  If f reports an error, the file
+// Tx calls f with a file constructed by New.  If f reports an error, the file
 // is automatically cancelled and Tx returns the error from f. Otherwise, Tx
 // returns the error from calling Close on the file.
 func Tx(target string, mode os.FileMode, f func(*File) error) error {
@@ -63,14 +64,12 @@ func WriteData(target string, data []byte, mode os.FileMode) error {
 
 // WriteAll copies all the data from r to the specified target path via a File.
 // It reports the total number of bytes copied.
-func WriteAll(target string, r io.Reader, mode os.FileMode) (int64, error) {
-	var nw int64
-	err := Tx(target, mode, func(f *File) error {
-		var err error
+func WriteAll(target string, r io.Reader, mode os.FileMode) (nw int64, err error) {
+	Tx(target, mode, func(f *File) error {
 		nw, err = f.tmp.ReadFrom(r)
-		return err
+		return nil
 	})
-	return nw, err
+	return
 }
 
 // A File is a writable temporary file that will be renamed to a target path
@@ -101,7 +100,8 @@ func (f *File) Close() error {
 }
 
 // Cancel closes the temporary associated with f and discards it.
-// It is safe to call Cancel even if f.Close has already succeeded.
+// It is safe to call Cancel even if f.Close has already succeeded; in that
+// case the cancellation has no effect.
 func (f *File) Cancel() {
 	// Clean up the temp file (only) if a rename has not yet occurred, or it failed.
 	// The check averts an A-B-A conflict during the window after renaming.
