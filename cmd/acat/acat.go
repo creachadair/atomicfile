@@ -31,6 +31,10 @@ temporary file.
 If -nonempty is true, %[1]s reports an error without writing the target
 file if the input is empty.
 
+If %[1]s is interrupted, the target file is not replaced, but the
+temporary file is left intact with any output was written before the
+interrupt occurred.
+
 Options:
 `, filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
