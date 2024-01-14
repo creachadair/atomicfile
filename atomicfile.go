@@ -25,7 +25,7 @@ func New(target string, mode os.FileMode) (*File, error) {
 		return nil, errors.New("target exists and is not a regular file")
 	}
 	dir, name := filepath.Split(target)
-	f, err := os.CreateTemp(filepath.Clean(dir), "aftmp."+name)
+	f, err := os.CreateTemp(filepath.Clean(dir), name+"-*.aftmp")
 	if err != nil {
 		return nil, err
 	} else if err := f.Chmod(mode); err != nil {

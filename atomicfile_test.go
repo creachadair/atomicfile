@@ -156,7 +156,7 @@ func TestSameDirectory(t *testing.T) {
 	}
 	defer f.Cancel()
 
-	m, err := filepath.Glob("aftmp.xyzzy*")
+	m, err := filepath.Glob("xyzzy-*.aftmp")
 	if err != nil {
 		t.Fatalf("Invalid glob: %v", err)
 	}
