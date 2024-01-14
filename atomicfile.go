@@ -39,9 +39,9 @@ func New(target string, mode os.FileMode) (*File, error) {
 	}, nil
 }
 
-// Tx calls f with a file constructed by New.  If f reports an error, the file
-// is automatically cancelled and Tx returns the error from f. Otherwise, Tx
-// returns the error from calling Close on the file.
+// Tx calls f with a file constructed by New.  If f reports an error or panics,
+// the file is automatically cancelled and Tx returns the error from f.
+// Otherwise, Tx returns the error from calling Close on the file.
 func Tx(target string, mode os.FileMode, f func(*File) error) error {
 	tmp, err := New(target, mode)
 	if err != nil {

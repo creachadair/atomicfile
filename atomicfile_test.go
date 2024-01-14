@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/creachadair/atomicfile"
+	"github.com/creachadair/mtest"
 )
 
 var (
@@ -194,6 +195,28 @@ func TestTx(t *testing.T) {
 			t.Errorf("Unexpected error: %v", err)
 		}
 		checkFile(t, path, 0604, text)
+	})
+
+	t.Run("Panic", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "knucklebones.txt")
+		v := mtest.MustPanic(t, func() {
+			atomicfile.Tx(path, 0600, func(*atomicfile.File) error {
+				panic("ouchies")
+			})
+		})
+
+		// Make sure we got the panic from the callback.
+		if s, ok := v.(string); !ok || s != "ouchies" {
+			t.Errorf("Unexpected panic: %v", v)
+		}
+
+		// Make sure nothing was left in the output directory.
+		elts, err := os.ReadDir(filepath.Dir(path))
+		if err != nil {
+			t.Fatalf("Reading output directory: %v", err)
+		} else if len(elts) != 0 {
+			t.Errorf("Unexpected output: %v", elts)
+		}
 	})
 }
 
