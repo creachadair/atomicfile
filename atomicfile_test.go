@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/creachadair/atomicfile"
-	"github.com/creachadair/mtest"
+	"github.com/creachadair/mds/mtest"
 )
 
 var (
