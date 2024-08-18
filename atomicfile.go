@@ -107,8 +107,9 @@ func (f *File) Cancel() {
 	// The check averts an A-B-A conflict during the window after renaming.
 	if tmp := f.tmp; tmp != nil {
 		f.tmp = nil
+		name := tmp.Name()
 		tmp.Close()
-		os.Remove(tmp.Name())
+		os.Remove(name)
 	}
 }
 
