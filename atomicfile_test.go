@@ -150,6 +150,9 @@ func TestDeferredCancel(t *testing.T) {
 
 func TestSameDirectory(t *testing.T) {
 	tmp := t.TempDir()
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatalf("Chdir: %v", err)
+	}
 
 	f, err := atomicfile.New("xyzzy", 0644)
 	if err != nil {
