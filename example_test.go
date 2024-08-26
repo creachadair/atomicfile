@@ -7,19 +7,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"testing"
 
 	"github.com/creachadair/atomicfile"
 )
 
 var tempDir string
-
-func init() {
-	dir, err := os.MkdirTemp("", "example")
-	if err != nil {
-		panic(err)
-	}
-	tempDir = dir
-}
 
 func cat(path string) {
 	f, err := os.Open(path)
@@ -95,4 +88,17 @@ func ExampleFile_Cancel() {
 	// Output:
 	// left right
 	// left right
+}
+
+func TestMain(m *testing.M) {
+	// Set up a temporary directory for the examples that will get cleaned up
+	// before the tests exit.
+	var err error
+	tempDir, err = os.MkdirTemp("", "atomicfile-example")
+	if err != nil {
+		log.Fatalf("Create example output directory: %v", err)
+	}
+	code := m.Run()
+	os.RemoveAll(tempDir)
+	os.Exit(code)
 }
