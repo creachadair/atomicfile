@@ -4,4 +4,4 @@ go 1.23
 
 toolchain go1.23.1
 
-require github.com/creachadair/mds v0.21.3
+require github.com/creachadair/mds v0.21.4
