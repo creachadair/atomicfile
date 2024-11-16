@@ -14,9 +14,12 @@ import (
 	"path/filepath"
 )
 
-// New constructs a new writable File with the given mode that will be renamed
-// to target when successfully closed.  New reports an error if target already
-// exists and is not a plain (regular) file.
+// New constructs a new writable [File] with the given permissions.
+//
+// When the file is successfully closed, it will be renamed to target.
+// If the close fails, or if the file is cancelled, the file is discarded.
+//
+// New reports an error if target already exists and is not a plain file.
 func New(target string, mode os.FileMode) (*File, error) {
 	// Verify that the target either does not exist, or is a regular file.  This
 	// does not prevent someone creating it later, but averts an obvious
@@ -39,9 +42,9 @@ func New(target string, mode os.FileMode) (*File, error) {
 	}, nil
 }
 
-// Tx calls f with a file constructed by New.  If f reports an error or panics,
-// the file is automatically cancelled and Tx returns the error from f.
-// Otherwise, Tx returns the error from calling Close on the file.
+// Tx calls f with a [File] constructed by [New].  If f reports an error or
+// panics, the file is automatically cancelled and Tx returns the error from f.
+// Otherwise, Tx returns the error from calling [File.Close].
 func Tx(target string, mode os.FileMode, f func(*File) error) error {
 	tmp, err := New(target, mode)
 	if err != nil {
@@ -54,7 +57,7 @@ func Tx(target string, mode os.FileMode, f func(*File) error) error {
 	return tmp.Close()
 }
 
-// WriteData copies data to the specified target path via a File.
+// WriteData copies data to the specified target path via a [File].
 func WriteData(target string, data []byte, mode os.FileMode) error {
 	return Tx(target, mode, func(f *File) error {
 		_, err := f.Write(data)
@@ -62,8 +65,8 @@ func WriteData(target string, data []byte, mode os.FileMode) error {
 	})
 }
 
-// WriteAll copies all the data from r to the specified target path via a File.
-// It reports the total number of bytes copied.
+// WriteAll copies all the data from r to the specified target path via a
+// [File].  It reports the total number of bytes copied.
 func WriteAll(target string, r io.Reader, mode os.FileMode) (nw int64, err error) {
 	Tx(target, mode, func(f *File) error {
 		nw, err = f.tmp.ReadFrom(r)
@@ -72,16 +75,17 @@ func WriteAll(target string, r io.Reader, mode os.FileMode) (nw int64, err error
 	return
 }
 
-// A File is a writable temporary file that will be renamed to a target path
-// when successfully closed.
+// A File is a temporary file that implements [io.Writer] and [io.ReaderFrom].
+// When a File is successfully closed, it is atomically renamed to its target.
+// Calling [File.Cancel] causes the file to be discarded without renaming.
 type File struct {
 	tmp    *os.File
 	target string
 }
 
-// Close closes the temporary associated with f and renames it to the
-// designated target file. If closing the temporary fails, or if the rename
-// fails, the temporary file is unlinked before Close returns.
+// Close closes the temporary file associated with f and renames it to the
+// designated target. If closing the file fails, or if the rename fails, the
+// temporary file is unlinked before Close returns.
 func (f *File) Close() error {
 	if f.tmp == nil {
 		return errors.New("file is already closed")
@@ -99,9 +103,9 @@ func (f *File) Close() error {
 	return nil
 }
 
-// Cancel closes the temporary associated with f and discards it.
-// It is safe to call Cancel even if f.Close has already succeeded; in that
-// case the cancellation has no effect.
+// Cancel closes the temporary associated with f and discards it.  It is safe
+// to call Cancel even if [File.Close] has already succeeded; in that case the
+// cancellation has no effect.
 func (f *File) Cancel() {
 	// Clean up the temp file (only) if a rename has not yet occurred, or it failed.
 	// The check averts an A-B-A conflict during the window after renaming.
@@ -113,8 +117,8 @@ func (f *File) Cancel() {
 	}
 }
 
-// Write writes data to f, satisfying io.Writer.
+// Write writes data to f, satisfying [io.Writer].
 func (f *File) Write(data []byte) (int, error) { return f.tmp.Write(data) }
 
-// ReadFrom implements the io.ReaderFrom interface to the underlying temporary.
+// ReadFrom implements the [io.ReaderFrom] interface to the underlying file.
 func (f *File) ReadFrom(r io.Reader) (int64, error) { return f.tmp.ReadFrom(r) }
