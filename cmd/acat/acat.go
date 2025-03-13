@@ -66,6 +66,7 @@ func main() {
 		f.Cancel()
 		log.Fatalf("Copy: %v", err)
 	} else if nw == 0 && *nonEmpty {
+		f.Cancel()
 		return
 	} else if err := f.Close(); err != nil {
 		log.Fatalf("Close: %v", err)
