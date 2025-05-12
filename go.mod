@@ -2,4 +2,4 @@ module github.com/creachadair/atomicfile
 
 go 1.23
 
-require github.com/creachadair/mds v0.24.2
+require github.com/creachadair/mds v0.24.3
