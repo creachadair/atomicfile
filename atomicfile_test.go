@@ -176,7 +176,7 @@ func TestTx(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "nonesuch.txt")
-		err := atomicfile.Tx(path, 0600, func(*atomicfile.File) error {
+		err := atomicfile.Tx(path, 0600, func(io.Writer) error {
 			return testErr
 		})
 		if err != testErr {
@@ -190,8 +190,8 @@ func TestTx(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		const text = "hello world\n"
 		path := filepath.Join(t.TempDir(), "goodies.txt")
-		err := atomicfile.Tx(path, 0604, func(f *atomicfile.File) error {
-			io.WriteString(f, text)
+		err := atomicfile.Tx(path, 0604, func(w io.Writer) error {
+			io.WriteString(w, text)
 			return nil
 		})
 		if err != nil {
@@ -203,7 +203,7 @@ func TestTx(t *testing.T) {
 	t.Run("Panic", func(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "knucklebones.txt")
 		v := mtest.MustPanic(t, func() {
-			atomicfile.Tx(path, 0600, func(*atomicfile.File) error {
+			atomicfile.Tx(path, 0600, func(io.Writer) error {
 				panic("ouchies")
 			})
 		})

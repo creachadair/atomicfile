@@ -42,10 +42,12 @@ func New(target string, mode os.FileMode) (*File, error) {
 	}, nil
 }
 
-// Tx calls f with a [File] constructed by [New].  If f reports an error or
-// panics, the file is automatically cancelled. If f reports an error, Tx
+// Tx calls f with an [io.Writer constructed by [New].  If f reports an error
+// or panics, the file is automatically cancelled. If f reports an error, Tx
 // returns that error; otherwise, Tx returns the result from [File.Close].
-func Tx(target string, mode os.FileMode, f func(*File) error) error {
+//
+// The concrete type of the writer is [*File].
+func Tx(target string, mode os.FileMode, f func(io.Writer) error) error {
 	tmp, err := New(target, mode)
 	if err != nil {
 		return err
@@ -59,8 +61,8 @@ func Tx(target string, mode os.FileMode, f func(*File) error) error {
 
 // WriteData copies data to the specified target path via a [File].
 func WriteData(target string, data []byte, mode os.FileMode) error {
-	return Tx(target, mode, func(f *File) error {
-		_, err := f.Write(data)
+	return Tx(target, mode, func(w io.Writer) error {
+		_, err := w.Write(data)
 		return err
 	})
 }
@@ -68,8 +70,8 @@ func WriteData(target string, data []byte, mode os.FileMode) error {
 // WriteAll copies all the data from r to the specified target path via a
 // [File].  It reports the total number of bytes copied.
 func WriteAll(target string, r io.Reader, mode os.FileMode) (nw int64, err error) {
-	Tx(target, mode, func(f *File) error {
-		nw, err = f.tmp.ReadFrom(r)
+	Tx(target, mode, func(w io.Writer) error {
+		nw, err = w.(*File).tmp.ReadFrom(r)
 		return nil
 	})
 	return
