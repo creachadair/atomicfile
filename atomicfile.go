@@ -42,7 +42,7 @@ func New(target string, mode os.FileMode) (*File, error) {
 	}, nil
 }
 
-// Tx calls f with an [io.Writer constructed by [New].  If f reports an error
+// Tx calls f with an [io.Writer] constructed by [New].  If f reports an error
 // or panics, the file is automatically cancelled. If f reports an error, Tx
 // returns that error; otherwise, Tx returns the result from [File.Close].
 //
