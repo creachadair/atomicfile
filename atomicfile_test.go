@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"testing/iotest"
 
 	"github.com/creachadair/atomicfile"
 	"github.com/creachadair/mds/mtest"
@@ -16,6 +17,10 @@ import (
 var (
 	_ io.ReaderFrom = (*atomicfile.File)(nil)
 )
+
+type readerFunc func([]byte) (int, error)
+
+func (f readerFunc) Read(buf []byte) (int, error) { return f(buf) }
 
 func checkFile(t *testing.T, path string, perm os.FileMode, want string) {
 	t.Helper()
@@ -246,5 +251,51 @@ func TestWrite(t *testing.T) {
 			t.Errorf("Unexpected error: %v", err)
 		}
 		checkFile(t, path, 0664, input)
+	})
+}
+
+func TestWriteAllErrors(t *testing.T) {
+	t.Run("Read", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "target.txt")
+		const old = "existing target"
+		if err := os.WriteFile(path, []byte(old), 0640); err != nil {
+			t.Fatalf("Writing target file: %v", err)
+		}
+
+		testErr := errors.New("read failed")
+		const partial = "partial"
+		data := io.MultiReader(strings.NewReader(partial), iotest.ErrReader(testErr))
+		nw, err := atomicfile.WriteAll(path, data, 0600)
+		if err != testErr {
+			t.Errorf("Got error %v, want %v", err, testErr)
+		}
+		if nw != int64(len(partial)) {
+			t.Errorf("Length: got %d, want %d", nw, len(partial))
+		}
+		checkFile(t, path, 0640, old)
+	})
+
+	t.Run("Rename", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "target.txt")
+		const input = "new target"
+		data := readerFunc(func(buf []byte) (int, error) {
+			if err := os.Mkdir(path, 0700); err != nil {
+				return 0, err
+			}
+			return copy(buf, input), io.EOF
+		})
+
+		nw, err := atomicfile.WriteAll(path, data, 0600)
+		if err == nil {
+			t.Error("WriteAll should have reported an error")
+		}
+		if nw != int64(len(input)) {
+			t.Errorf("Length: got %d, want %d", nw, len(input))
+		}
+		if fi, err := os.Stat(path); err != nil {
+			t.Errorf("Stat target: %v", err)
+		} else if !fi.IsDir() {
+			t.Errorf("Target mode: got %v, want directory", fi.Mode())
+		}
 	})
 }
