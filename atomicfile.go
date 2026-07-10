@@ -70,9 +70,9 @@ func WriteData(target string, data []byte, mode os.FileMode) error {
 // WriteAll copies all the data from r to the specified target path via a
 // [File].  It reports the total number of bytes copied.
 func WriteAll(target string, r io.Reader, mode os.FileMode) (nw int64, err error) {
-	Tx(target, mode, func(w io.Writer) error {
+	err = Tx(target, mode, func(w io.Writer) error {
 		nw, err = w.(*File).tmp.ReadFrom(r)
-		return nil
+		return err
 	})
 	return
 }
